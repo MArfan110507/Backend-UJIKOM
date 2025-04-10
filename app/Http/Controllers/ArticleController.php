@@ -57,16 +57,18 @@ class ArticleController extends Controller
             'image_url' => 'nullable|url',
         ]);
 
-        Article::create([
+        $data = Article::create([
             'title' => $request->title,
             'content' => $request->content,
             'game' => $request->game,
-            'status' => $request->status,
+            'status' => $request ? $request->status : 'draft',
             'image_url' => $request->image_url,
             'user_id' => Auth::id(),
         ]);
 
-        return redirect()->route('article.index')->with('success', 'Article berhasil disimpan.');
+        return response()->json([
+            'data' => $data
+        ]);
     }
 
     // API endpoint for storing articles from React

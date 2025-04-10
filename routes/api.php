@@ -88,7 +88,7 @@ Route::middleware(['jwt.auth'])->group(function () {
     // Article
     Route::prefix('articles')->group(function () {
         Route::get('/', [ArticleController::class, 'apiIndex']); // GET /api/articles
-        Route::post('/', [ArticleController::class, 'apiStore']); // POST /api/articles
+        Route::post('/', [ArticleController::class, 'store']); // POST /api/articles
         Route::put('/toggle-status/{id}', [ArticleController::class, 'apiToggleStatus']); // PUT /api/articles/toggle-status/1
         Route::delete('/{id}', [ArticleController::class, 'apiDestroy']); // DELETE /api/articles/1
     });    

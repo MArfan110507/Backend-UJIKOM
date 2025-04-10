@@ -15,6 +15,7 @@ class Article extends Model
         'game',
         'status',
         'image_url',
+        'user_id'
     ];
 
     /**

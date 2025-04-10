@@ -16,7 +16,8 @@ return new class extends Migration
             $table->string('title');
             $table->text('content');
             $table->string('game');
-            $table->string('status')->default('draft'); // draft or published
+            // $table->string('status')->default('draft'); // draft or published
+            $table->enum('status', ['published', 'draft'])->default('draft');
             $table->string('image_url');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
