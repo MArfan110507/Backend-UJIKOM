@@ -11,18 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('jualakuns', function (Blueprint $table) {
+        Schema::create('sellaccounts', function (Blueprint $table) {
             $table->id();
             $table->string('game'); // Nama game
-            $table->string('image');
-            $table->json('images'); // Menyimpan maksimal 5 gambar dalam format JSON
+            $table->text('images'); // Menyimpan string JSON dari frontend (maks 5 gambar)
             $table->integer('stock'); // Stok akun
             $table->string('server'); // Server game
             $table->string('title'); // Judul akun
             $table->decimal('price', 10, 2); // Harga akun
             $table->decimal('discount', 10, 2)->nullable(); // Diskon
             $table->string('level'); // Level akun
-            $table->json('features'); // Fitur dalam bentuk array JSON
+            $table->text('features'); // Menyimpan string JSON dari frontend (fitur-fitur)
             $table->string('game_email'); // Email akun game (hanya terlihat di riwayat pembelian)
             $table->string('game_password'); // Password akun game (hanya terlihat di riwayat pembelian)
             $table->timestamps();
@@ -34,6 +33,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('jualakuns');
+        Schema::dropIfExists('sellaccounts');
     }
 };

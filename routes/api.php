@@ -4,7 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\JualAkunController;
+use App\Http\Controllers\SellAccountController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\API\SocialAuthController;
 use App\Http\Controllers\FAQController;
@@ -76,13 +76,12 @@ Route::middleware(['jwt.auth'])->group(function () {
     Route::get('/transactions/{id}', [TransactionController::class, 'show']);
     Route::put('/transactions/{id}/status', [TransactionController::class, 'updateStatus']);
 
-    // Jual Akun
-    Route::prefix('jualakuns')->group(function () {
-        Route::get('/', [JualAkunController::class, 'index']);
-        Route::post('/', [JualAkunController::class, 'store']);
-        Route::get('/{id}', [JualAkunController::class, 'show']);
-        Route::put('/{id}', [JualAkunController::class, 'update']);
-        Route::delete('/{id}', [JualAkunController::class, 'destroy']);
+    Route::prefix('sellaccount')->group(function () {
+        Route::get('/', [SellAccountController::class, 'index']);
+        Route::post('/', [SellAccountController::class, 'store']);
+        Route::get('/{id}', [SellAccountController::class, 'show']);
+        Route::put('/{id}', [SellAccountController::class, 'update']);
+        Route::delete('/{id}', [SellAccountController::class, 'destroy']);
     });
 
     // Article

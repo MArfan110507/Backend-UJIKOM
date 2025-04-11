@@ -5,13 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class JualAkun extends Model
+class SellAccount extends Model
 {
     use HasFactory;
 
+    protected $table = 'sellaccounts';
+
     protected $fillable = [
         'game',
-        'image',
         'images',
         'stock',
         'server',
@@ -19,17 +20,8 @@ class JualAkun extends Model
         'price',
         'discount',
         'level',
-        'features'
+        'features',
+        'game_email',
+        'game_password',
     ];
-
-    protected $casts = [
-        'images' => 'array',
-        'features' => 'array',
-    ];
-
-    public function transactionItems()
-    {
-        return $this->hasMany(TransactionItem::class);
-    }
-
 }
