@@ -13,17 +13,17 @@ return new class extends Migration
     {
         Schema::create('sellaccounts', function (Blueprint $table) {
             $table->id();
-            $table->string('game'); // Nama game
-            $table->text('images'); // Menyimpan string JSON dari frontend (maks 5 gambar)
-            $table->integer('stock'); // Stok akun
-            $table->string('server'); // Server game
-            $table->string('title'); // Judul akun
-            $table->decimal('price', 10, 2); // Harga akun
-            $table->decimal('discount', 10, 2)->nullable(); // Diskon
-            $table->string('level'); // Level akun
-            $table->text('features'); // Menyimpan string JSON dari frontend (fitur-fitur)
-            $table->string('game_email'); // Email akun game (hanya terlihat di riwayat pembelian)
-            $table->string('game_password'); // Password akun game (hanya terlihat di riwayat pembelian)
+            $table->string('game');
+            $table->json('images'); // Ganti dari text ke json
+            $table->integer('stock');
+            $table->string('server');
+            $table->string('title');
+            $table->decimal('price', 10, 2);
+            $table->decimal('discount', 10, 2)->nullable();
+            $table->string('level');
+            $table->json('features');
+            $table->string('game_email');
+            $table->string('game_password');
             $table->timestamps();
         });
     }

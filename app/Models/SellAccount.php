@@ -2,15 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class SellAccount extends Model
 {
-    use HasFactory;
-
-    protected $table = 'sellaccounts';
-
     protected $fillable = [
         'game',
         'images',
@@ -23,5 +18,10 @@ class SellAccount extends Model
         'features',
         'game_email',
         'game_password',
+    ];
+
+    protected $casts = [
+        'images' => 'array',
+        'features' => 'array',
     ];
 }
