@@ -61,7 +61,7 @@ class ArticleController extends Controller
             'title' => $request->title,
             'content' => $request->content,
             'game' => $request->game,
-            'status' => $request ? $request->status : 'draft',
+            'status' => $request->status ? $request->status : 'draft',
             'image_url' => $request->image_url,
             'user_id' => Auth::id(),
         ]);
@@ -85,7 +85,7 @@ class ArticleController extends Controller
             'title' => 'required|string|max:255',
             'content' => 'required|string',
             'game' => 'required|string|max:255',
-            'status' => 'required|in:Published,Draft',
+            'status' => 'required|in:published,draft',
             'imageUrl' => 'nullable|url', // Match the frontend field name
         ]);
 
