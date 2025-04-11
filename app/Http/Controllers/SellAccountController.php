@@ -17,10 +17,9 @@ class SellAccountController extends Controller
     {
         $request->validate([
             'game' => 'required|string',
-            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-            'image_urls' => 'nullable|array',
-            'image_urls.*' => 'nullable|url',
-            'stock' => 'required|integer|min:1',
+            'images' => 'nullable|array|max:5',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'stock' => 'required|integer',
             'server' => 'required|string',
             'title' => 'required|string',
             'price' => 'required|numeric',
@@ -58,7 +57,7 @@ class SellAccountController extends Controller
             'game' => $request->game,
             'images' => $finalImages,
             'stock' => $request->stock,
-            'server' => $request->server,
+            'server' => $request->get('server'),
             'title' => $request->title,
             'price' => $request->price,
             'discount' => $request->discount,
@@ -119,8 +118,15 @@ class SellAccountController extends Controller
         }
 
         $data = $request->only([
-            'game', 'stock', 'server', 'title', 'price',
-            'discount', 'level', 'game_email', 'game_password'
+            'game',
+            'stock',
+            'server',
+            'title',
+            'price',
+            'discount',
+            'level',
+            'game_email',
+            'game_password'
         ]);
 
         if (!empty($finalImages)) {

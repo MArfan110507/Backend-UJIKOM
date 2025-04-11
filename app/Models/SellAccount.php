@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class SellAccount extends Model
 {
+    protected $table = 'sellaccounts';
+
     protected $fillable = [
         'game',
         'images',
