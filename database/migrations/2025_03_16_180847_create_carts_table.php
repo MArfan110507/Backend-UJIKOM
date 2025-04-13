@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('carts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // ID user
-            $table->foreignId('jualakun_id')->constrained('jualakuns')->onDelete('cascade'); // ID akun game
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('sellaccount_id')->constrained()->onDelete('cascade');
             $table->integer('quantity')->default(1); // Jumlah yang ingin dibeli
             $table->timestamps();
         });

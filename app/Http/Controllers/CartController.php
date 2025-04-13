@@ -12,22 +12,21 @@ class CartController extends Controller
     // Menampilkan semua item dalam keranjang pengguna
     public function index()
     {
-        $carts = Cart::where('user_id', Auth::id())->with('jualakun')->get();
+        $carts = Cart::where('user_id', Auth::id())->with('sellaccount')->get();
         return response()->json($carts);
     }
 
-    // Menambahkan item ke dalam keranjang
     public function store(Request $request)
     {
         $request->validate([
-            'jualakun_id' => 'required|exists:jualakuns,id',
+            'sellaccount_id' => 'required|exists:sellaccounts,id',
             'quantity' => 'required|integer|min:1',
         ]);
 
         $cart = Cart::updateOrCreate(
             [
                 'user_id' => Auth::id(),
-                'jualakun_id' => $request->jualakun_id,
+                'sellaccount_id' => $request->sellaccount_id,
             ],
             [
                 'quantity' => $request->quantity,
@@ -37,7 +36,6 @@ class CartController extends Controller
         return response()->json(['message' => 'Item added to cart', 'cart' => $cart], 201);
     }
 
-    // Mengupdate jumlah item dalam keranjang
     public function update(Request $request, $id)
     {
         $cart = Cart::where('user_id', Auth::id())->findOrFail($id);
@@ -50,7 +48,6 @@ class CartController extends Controller
         return response()->json(['message' => 'Cart updated', 'cart' => $cart]);
     }
 
-    // Menghapus item dari keranjang
     public function destroy($id)
     {
         $cart = Cart::where('user_id', Auth::id())->findOrFail($id);
@@ -59,3 +56,4 @@ class CartController extends Controller
         return response()->json(['message' => 'Item removed from cart']);
     }
 }
+

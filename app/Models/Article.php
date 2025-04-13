@@ -9,18 +9,19 @@ class Article extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
+        protected $fillable = [
         'title',
         'content',
         'game',
         'status',
+        'image_path',
         'image_url',
         'user_id'
     ];
 
     /**
-     * Get the user who authored the article.
-     */
+    * Get the user who authored the article.
+    */
     public function user()
     {
         return $this->belongsTo(User::class);

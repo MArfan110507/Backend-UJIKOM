@@ -53,13 +53,13 @@ class ArticleController extends Controller
             'content' => 'required|string',
             'game' => 'required|string|max:255',
             'status' => 'required|in:published,draft',
-            'image' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048', // ✅ gunakan 'image' bukan 'image_url'
+            'image' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048', 
         ]);
 
-        // ✅ Simpan gambar jika ada
         $imagePath = null;
         if ($request->hasFile('image')) {
             $imagePath = $request->file('image')->store('articles', 'public'); // simpan di storage/app/public/articles
+            $imageUrl = Storage::disk('public')->url($imagePath); // ambil URL gambar
         }
 
         $article = Article::create([
@@ -67,7 +67,8 @@ class ArticleController extends Controller
             'content' => $validated['content'],
             'game' => $validated['game'],
             'status' => strtolower($validated['status']),
-            'image_url' => $imagePath ? '/storage/' . $imagePath : null, // ✅ path benar
+            'image_path' => $imagePath ?? null, 
+            'image_url' => $imageUrl ?? null, 
             'user_id' => Auth::id(),
         ]);
 
@@ -78,9 +79,7 @@ class ArticleController extends Controller
             'avatarUrl' => Auth::user()->avatar_url ?? '/api/placeholder/48/48',
             'verified' => Auth::user()->verified ?? false,
             'timeAgo' => 'Baru saja • ',
-            'imageUrl' => $article->image_url
-                ? asset($article->image_url)
-                : '/api/placeholder/300/200',
+            'imageUrl' => $article->image_url ?? '/api/placeholder/300/200',
             'title' => $article->title,
             'content' => $article->content,
             'details' => [],
