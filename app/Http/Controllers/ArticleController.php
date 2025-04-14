@@ -20,7 +20,17 @@ class ArticleController extends Controller
     // API endpoint for React
     public function apiIndex()
     {
-        $articles = Article::with('user:id,name')->latest()->get()->map(function ($article) {
+        $user = Auth::user();
+    
+        // Jika user login dan admin, ambil semua
+        if ($user && $user->role === 'admin') {             
+            $articles = Article::with('user:id,name')->latest()->get();
+        } else {
+            // Selain admin (user biasa atau guest), hanya ambil yang published
+            $articles = Article::where('status', 'published')->with('user:id,name')->latest()->get();
+        }
+    
+        $articles = $articles->map(function ($article) {
             return [
                 'id' => $article->id,
                 'admin' => $article->user->name,
@@ -36,7 +46,7 @@ class ArticleController extends Controller
                 'date' => $article->created_at->format('Y-m-d'),
             ];
         });
-
+    
         return response()->json($articles);
     }
 
