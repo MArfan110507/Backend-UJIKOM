@@ -10,7 +10,14 @@ class SellAccountController extends Controller
 {
     public function index()
     {
-        return response()->json(SellAccount::all());
+        $accounts = SellAccount::all()->map(function ($account) {
+            if (!auth()->check() || auth()->user()->role !== 'admin') {
+                unset($account->game_email, $account->game_password);
+            }
+            return $account;
+        });
+
+        return response()->json($accounts);
     }
 
     public function store(Request $request)
@@ -32,15 +39,13 @@ class SellAccountController extends Controller
 
         $finalImages = [];
 
-        // Handle upload file
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $file) {
                 $path = $file->store('public/sellaccount_images');
-                $finalImages[] = asset(Storage::url($path)); // full URL
+                $finalImages[] = asset(Storage::url($path));
             }
         }
 
-        // Handle URL gambar dari frontend
         if ($request->has('image_urls')) {
             foreach ($request->image_urls as $url) {
                 if (filter_var($url, FILTER_VALIDATE_URL)) {
@@ -57,7 +62,7 @@ class SellAccountController extends Controller
             'game' => $request->game,
             'images' => $finalImages,
             'stock' => $request->stock,
-            'server' => $request->get('server'),
+            'server' => $request->server,
             'title' => $request->title,
             'price' => $request->price,
             'discount' => $request->discount,
@@ -73,6 +78,11 @@ class SellAccountController extends Controller
     public function show($id)
     {
         $account = SellAccount::findOrFail($id);
+
+        if (!auth()->check() || auth()->user()->role !== 'admin') {
+            unset($account->game_email, $account->game_password);
+        }
+
         return response()->json($account);
     }
 
@@ -101,7 +111,7 @@ class SellAccountController extends Controller
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $file) {
                 $path = $file->store('public/sellaccount_images');
-                $finalImages[] = asset(Storage::url($path)); // full URL
+                $finalImages[] = asset(Storage::url($path));
             }
         }
 

@@ -29,6 +29,12 @@ class User extends Authenticatable implements JWTSubject
         'email_verified_at' => 'datetime',
     ];
 
+    // app/Models/User.php
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
+
     // JWT Methods
     public function getJWTIdentifier()
     {

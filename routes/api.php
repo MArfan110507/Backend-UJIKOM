@@ -78,11 +78,15 @@ Route::middleware(['jwt.auth'])->group(function () {
 
     Route::prefix('sellaccount')->group(function () {
         Route::get('/', [SellAccountController::class, 'index']);
-        Route::post('/', [SellAccountController::class, 'store']);
         Route::get('/{id}', [SellAccountController::class, 'show']);
-        Route::put('/{id}', [SellAccountController::class, 'update']);
-        Route::delete('/{id}', [SellAccountController::class, 'destroy']);
+
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::post('/', [SellAccountController::class, 'store']);
+            Route::put('/{id}', [SellAccountController::class, 'update']);
+            Route::delete('/{id}', [SellAccountController::class, 'destroy']);
+        });
     });
+
 
     // Article
     Route::prefix('articles')->group(function () {
@@ -90,5 +94,5 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::post('/', [ArticleController::class, 'apistore']); // POST /api/articles
         Route::put('/toggle-status/{id}', [ArticleController::class, 'apiToggleStatus']); // PUT /api/articles/toggle-status/1
         Route::delete('/{id}', [ArticleController::class, 'apiDestroy']); // DELETE /api/articles/1
-    });    
+    });
 });
