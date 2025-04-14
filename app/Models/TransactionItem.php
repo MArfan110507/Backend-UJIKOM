@@ -29,6 +29,6 @@ class TransactionItem extends Model
      */
     public function akun()
     {
-        return $this->belongsTo(Jualakun::class, 'jualakun_id');
+        return $this->belongsTo(SellAccount::class, 'sellaccount_id');
     }
 }

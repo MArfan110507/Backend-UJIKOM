@@ -10,6 +10,11 @@ use Midtrans\Config;
 
 class TransactionController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth:api');
+    }
+
     public function index()
     {
         return Transaction::with('user')->latest()->get();
@@ -60,7 +65,7 @@ class TransactionController extends Controller
             'payment_gateway' => 'midtrans',
         ]);
 
-        // Midtrans config (bisa dilepas kalau sudah di AppServiceProvider)
+        // Midtrans config
         Config::$serverKey = env('MIDTRANS_SERVER_KEY');
         Config::$isProduction = false;
         Config::$isSanitized = true;
@@ -99,6 +104,10 @@ class TransactionController extends Controller
 
     public function updateStatus(Request $request, $id)
     {
+        $request->validate([
+            'status' => 'required|in:pending,paid,failed,refunded'
+        ]);
+
         $transaction = Transaction::findOrFail($id);
         $transaction->update([
             'status' => $request->status

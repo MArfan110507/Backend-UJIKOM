@@ -70,11 +70,15 @@ Route::middleware(['jwt.auth'])->group(function () {
     });
 
     // Transactions
-    Route::post('/midtrans/token', [TransactionController::class, 'createMidtransToken']);
-    Route::get('/transactions', [TransactionController::class, 'index']);
-    Route::post('/transactions', [TransactionController::class, 'store']);
-    Route::get('/transactions/{id}', [TransactionController::class, 'show']);
-    Route::put('/transactions/{id}/status', [TransactionController::class, 'updateStatus']);
+
+    Route::middleware('auth:api')->prefix('transaction')->group(function () {
+        Route::get('/', [TransactionController::class, 'index']);
+        Route::post('/', [TransactionController::class, 'store']);
+        Route::post('/createMidtransToken', [TransactionController::class, 'createMidtransToken']); // ✅ Tambahkan ini
+        Route::get('/{id}', [TransactionController::class, 'show']);
+        Route::put('/{id}/status', [TransactionController::class, 'updateStatus']);
+    });
+
 
     Route::prefix('sellaccount')->group(function () {
         Route::get('/', [SellAccountController::class, 'index']);
