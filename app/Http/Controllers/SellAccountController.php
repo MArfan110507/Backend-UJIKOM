@@ -27,7 +27,7 @@ class SellAccountController extends Controller
             'images' => 'nullable|array|max:5',
             'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'stock' => 'required|integer',
-            'server' => 'required|string',
+            'game_server' => 'required|string', // GANTI INI
             'title' => 'required|string',
             'price' => 'required|numeric',
             'discount' => 'nullable|numeric',
@@ -62,7 +62,7 @@ class SellAccountController extends Controller
             'game' => $request->game,
             'images' => $finalImages,
             'stock' => $request->stock,
-            'server' => $request->server,
+            'game_server' => $request->game_server, // GANTI INI
             'title' => $request->title,
             'price' => $request->price,
             'discount' => $request->discount,
@@ -96,7 +96,7 @@ class SellAccountController extends Controller
             'image_urls' => 'nullable|array',
             'image_urls.*' => 'nullable|url',
             'stock' => 'sometimes|required|integer|min:1',
-            'server' => 'sometimes|required|string',
+            'game_server' => 'sometimes|required|string', // GANTI INI
             'title' => 'sometimes|required|string',
             'price' => 'sometimes|required|numeric',
             'discount' => 'nullable|numeric',
@@ -130,7 +130,7 @@ class SellAccountController extends Controller
         $data = $request->only([
             'game',
             'stock',
-            'server',
+            'game_server', // GANTI INI
             'title',
             'price',
             'discount',

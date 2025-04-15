@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('game');
             $table->json('images'); // Ganti dari text ke json
             $table->integer('stock');
-            $table->string('server');
+            $table->string('game_server');
             $table->string('title');
             $table->decimal('price', 10, 2);
             $table->decimal('discount', 10, 2)->nullable();

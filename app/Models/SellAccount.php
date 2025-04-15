@@ -12,7 +12,7 @@ class SellAccount extends Model
         'game',
         'images',
         'stock',
-        'server',
+        'game_server',
         'title',
         'price',
         'discount',

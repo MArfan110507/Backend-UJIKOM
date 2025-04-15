@@ -21,15 +21,15 @@ class ArticleController extends Controller
     public function apiIndex()
     {
         $user = Auth::user();
-    
+
         // Jika user login dan admin, ambil semua
-        if ($user && $user->role === 'admin') {             
+        if ($user && $user->role === 'admin') {
             $articles = Article::with('user:id,name')->latest()->get();
         } else {
             // Selain admin (user biasa atau guest), hanya ambil yang published
             $articles = Article::where('status', 'published')->with('user:id,name')->latest()->get();
         }
-    
+
         $articles = $articles->map(function ($article) {
             return [
                 'id' => $article->id,
@@ -46,63 +46,65 @@ class ArticleController extends Controller
                 'date' => $article->created_at->format('Y-m-d'),
             ];
         });
-    
+
         return response()->json($articles);
     }
 
     // API endpoint for storing articles from React
     public function apiStore(Request $request)
-{
-    if (!Auth::check()) {
-        return response()->json(['message' => 'Unauthorized'], 401);
-    }
-
-    try {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'content' => 'required|string',
-            'game' => 'required|string|max:255',
-            'status' => 'required|in:published,draft',
-            'image' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048', 
-        ]);
-
-        $imagePath = null;
-        if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('articles', 'public'); // simpan di storage/app/public/articles
-            $imageUrl = Storage::disk('public')->url($imagePath); // ambil URL gambar
+    {
+        if (!Auth::check()) {
+            return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        $article = Article::create([
-            'title' => $validated['title'],
-            'content' => $validated['content'],
-            'game' => $validated['game'],
-            'status' => strtolower($validated['status']),
-            'image_path' => $imagePath ?? null, 
-            'image_url' => $imageUrl ?? null, 
-            'user_id' => Auth::id(),
-        ]);
+        try {
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'content' => 'required|string',
+                'game' => 'required|string|max:255',
+                'status' => 'required|in:published,draft',
+                'image' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
+            ]);
 
-        return response()->json([
-            'id' => $article->id,
-            'admin' => Auth::user()->name,
-            'game' => $article->game,
-            'avatarUrl' => Auth::user()->avatar_url ?? '/api/placeholder/48/48',
-            'verified' => Auth::user()->verified ?? false,
-            'timeAgo' => 'Baru saja • ',
-            'imageUrl' => $article->image_url ?? '/api/placeholder/300/200',
-            'title' => $article->title,
-            'content' => $article->content,
-            'details' => [],
-            'status' => ucfirst($article->status),
-            'date' => $article->created_at->format('Y-m-d'),
-        ], 201);
-    } catch (\Exception $e) {
-        return response()->json([
-            'message' => 'Failed to create article',
-            'error' => $e->getMessage()
-        ], 500);
+            $imagePath = null;
+            $imageUrl = null;
+
+            if ($request->hasFile('image')) {
+                $imagePath = $request->file('image')->store('articles', 'public'); // simpan ke storage/app/public/articles
+                $imageUrl = asset('storage/' . $imagePath); // ini akan jadi URL lengkap: http://yourdomain.com/storage/articles/xxx.jpg
+            }
+
+            $article = Article::create([
+                'title' => $validated['title'],
+                'content' => $validated['content'],
+                'game' => $validated['game'],
+                'status' => strtolower($validated['status']),
+                'image_path' => $imagePath ?? null,
+                'image_url' => $imageUrl ?? null,
+                'user_id' => Auth::id(),
+            ]);
+
+            return response()->json([
+                'id' => $article->id,
+                'admin' => Auth::user()->name,
+                'game' => $article->game,
+                'avatarUrl' => Auth::user()->avatar_url ?? '/api/placeholder/48/48',
+                'verified' => Auth::user()->verified ?? false,
+                'timeAgo' => 'Baru saja • ',
+                'imageUrl' => $article->image_url ?? '/api/placeholder/300/200',
+                'title' => $article->title,
+                'content' => $article->content,
+                'details' => [],
+                'status' => ucfirst($article->status),
+                'date' => $article->created_at->format('Y-m-d'),
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to create article',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
-}
 
     public function update(Request $request, $id)
     {

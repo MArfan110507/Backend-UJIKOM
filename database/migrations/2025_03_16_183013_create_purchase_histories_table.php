@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('purchase_histories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade'); // ID user yang membeli
-            $table->foreignId('sellaccount_id')->constrained('sell_account')->onDelete('cascade'); // ID akun game yang dibeli
+            $table->foreignId('sellaccounts_id')->constrained('sellaccounts')->onDelete('cascade'); // ID akun game yang dibeli
             $table->decimal('total_price', 10, 2); // Total harga pembelian
             $table->dateTime('purchase_date'); // Tanggal pembelian
             $table->string('game_email'); // Email akun game yang dibeli

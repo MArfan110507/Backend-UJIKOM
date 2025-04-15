@@ -83,13 +83,9 @@ Route::middleware(['jwt.auth'])->group(function () {
     Route::prefix('sellaccount')->group(function () {
         Route::get('/', [SellAccountController::class, 'index']);
         Route::get('/{id}', [SellAccountController::class, 'show']);
-    
-        // Ganti ini:
-        Route::middleware('auth:api')->group(function () {
             Route::post('/', [SellAccountController::class, 'store']);
             Route::put('/{id}', [SellAccountController::class, 'update']);
             Route::delete('/{id}', [SellAccountController::class, 'destroy']);
-        });
     });
     
 
