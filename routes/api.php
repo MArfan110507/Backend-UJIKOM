@@ -7,8 +7,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SellAccountController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\API\SocialAuthController;
-use App\Http\Controllers\FAQController;
-use App\Http\Controllers\FAQChatController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\PurchaseHistoryController;
 use App\Http\Controllers\TransactionController;
@@ -45,14 +44,17 @@ Route::middleware(['jwt.auth'])->group(function () {
     Route::put('/profile', [ProfileController::class, 'update']);
     Route::put('/profile/password', [ProfileController::class, 'updatePassword']);
 
-    // FAQ
-    Route::get('/faqs', [FAQController::class, 'index']);
-    Route::post('/faqs', [FAQController::class, 'store']);
-    Route::put('/faqs/{id}/close', [FAQController::class, 'close']);
+    // Chats
+    Route::middleware(['auth:api'])->group(function () {
+        // 🔍 Lihat semua chat berdasarkan sellaccount_id dan receiver_id
+        Route::get('/chats/{sellaccount_id}/{receiver_id}', [ChatController::class, 'index']);
 
-    // FAQ Chat
-    Route::get('/faqs/{faq_id}/chats', [FAQChatController::class, 'index']);
-    Route::post('/faqs/{faq_id}/chats', [FAQChatController::class, 'store']);
+        // 💬 Kirim pesan baru
+        Route::post('/chats', [ChatController::class, 'store']);
+
+        // 🔁 Update status chat (pending / accept)
+        Route::patch('/chats/{id}/status', [ChatController::class, 'updateStatus']);
+    });
 
     // Purchase History
     Route::prefix('purchase-history')->group(function () {
@@ -83,11 +85,11 @@ Route::middleware(['jwt.auth'])->group(function () {
     Route::prefix('sellaccount')->group(function () {
         Route::get('/', [SellAccountController::class, 'index']);
         Route::get('/{id}', [SellAccountController::class, 'show']);
-            Route::post('/', [SellAccountController::class, 'store']);
-            Route::put('/{id}', [SellAccountController::class, 'update']);
-            Route::delete('/{id}', [SellAccountController::class, 'destroy']);
+        Route::post('/', [SellAccountController::class, 'store']);
+        Route::put('/{id}', [SellAccountController::class, 'update']);
+        Route::delete('/{id}', [SellAccountController::class, 'destroy']);
     });
-    
+
 
     // Article
     Route::prefix('articles')->group(function () {

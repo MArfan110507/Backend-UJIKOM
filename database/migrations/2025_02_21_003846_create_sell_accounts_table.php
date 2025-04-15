@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('sellaccounts', function (Blueprint $table) {
             $table->id();
             $table->string('game');
-            $table->json('images'); // Ganti dari text ke json
+            $table->json('images'); // Gambar yang tampil untuk user (URL)
+            $table->json('image_paths')->nullable(); // Path asli file di storage
             $table->integer('stock');
             $table->string('game_server');
             $table->string('title');
@@ -24,7 +25,11 @@ return new class extends Migration
             $table->json('features');
             $table->string('game_email');
             $table->string('game_password');
+            $table->unsignedBigInteger('admin_id'); // ID admin yang membuat sellaccount
             $table->timestamps();
+
+            // Opsional: relasi foreign key ke tabel users
+            $table->foreign('admin_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 
