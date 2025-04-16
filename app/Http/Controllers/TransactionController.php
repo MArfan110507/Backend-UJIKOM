@@ -151,6 +151,34 @@ class TransactionController extends Controller
         }
     }
 
+    public function listPending()
+    {
+        if (auth()->user()->role !== 'admin') {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $transactions = Transaction::where('status', 'pending')->with('user:id,name')->get();
+
+        return response()->json($transactions);
+    }
+
+    public function approve($id)
+    {
+        $transaction = Transaction::findOrFail($id);
+
+        if (auth()->user()->role !== 'admin') {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        if ($transaction->status !== 'pending') {
+            return response()->json(['error' => 'Only pending transactions can be approved.'], 422);
+        }
+
+        $transaction->status = 'complete';
+        $transaction->save();
+
+        return response()->json(['message' => 'Transaction approved successfully.']);
+    }
 
     public function updateStatus(Request $request, $id)
     {

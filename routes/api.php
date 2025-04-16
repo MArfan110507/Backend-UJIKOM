@@ -40,19 +40,22 @@ Route::middleware(['jwt.auth'])->group(function () {
     });
 
     // Profile
-    Route::get('/profile', [ProfileController::class, 'show']);
-    Route::put('/profile', [ProfileController::class, 'update']);
-    Route::put('/profile/password', [ProfileController::class, 'updatePassword']);
+Route::middleware('auth:api')->prefix('profile')->group(function () {
+    Route::get('/', [ProfileController::class, 'show']); // Menampilkan profil
+    Route::put('/', [ProfileController::class, 'update']); // Mengubah nickname, avatar, dan password
+    Route::post('/reset-password', [ProfileController::class, 'resetPassword']); // Reset password
+});
+
 
     // Chats
     Route::middleware(['auth:api'])->group(function () {
-        // 🔍 Lihat semua chat berdasarkan sellaccount_id dan receiver_id
+        // Lihat semua chat berdasarkan sellaccount_id dan receiver_id
         Route::get('/chats/{sellaccount_id}/{receiver_id}', [ChatController::class, 'index']);
 
-        // 💬 Kirim pesan baru
+        // Kirim pesan baru
         Route::post('/chats', [ChatController::class, 'store']);
 
-        // 🔁 Update status chat (pending / accept)
+        // Update status chat (pending / accept)
         Route::patch('/chats/{id}/status', [ChatController::class, 'updateStatus']);
     });
 
@@ -76,11 +79,13 @@ Route::middleware(['jwt.auth'])->group(function () {
     Route::middleware('auth:api')->prefix('transaction')->group(function () {
         Route::get('/', [TransactionController::class, 'index']);
         Route::post('/', [TransactionController::class, 'store']);
-        Route::post('/transactions/{id}/refund', [TransactionController::class, 'refund']);
-        Route::post('/createMidtransToken', [TransactionController::class, 'createMidtransToken']); // ✅ Tambahkan ini
+        Route::post('/{id}/approve', [TransactionController::class, 'approve']);
+        Route::post('/{id}/refund', [TransactionController::class, 'refund']);
+        Route::post('/createMidtransToken', [TransactionController::class, 'createMidtransToken']);
         Route::get('/{id}', [TransactionController::class, 'show']);
         Route::put('/{id}/status', [TransactionController::class, 'updateStatus']);
     });
+    
 
 
     Route::prefix('sellaccount')->group(function () {
