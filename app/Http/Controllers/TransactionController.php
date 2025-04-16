@@ -7,6 +7,8 @@ use App\Models\Transaction;
 use Illuminate\Support\Facades\Auth;
 use Midtrans\Snap;
 use Midtrans\Config;
+use Midtrans\Transaction as MidtransTransaction;
+use Midtrans\Refund;
 
 class TransactionController extends Controller
 {
@@ -98,14 +100,62 @@ class TransactionController extends Controller
 
     public function show($id)
     {
-        $transaction = Transaction::with('user')->findOrFail($id);
+        $transaction = Transaction::with('user')->find($id);
+
+        if (!$transaction) {
+            return response()->json(['message' => 'Transaction not found'], 404);
+        }
+
         return response()->json($transaction);
     }
+
+
+    public function refund(Request $request, $id)
+    {
+        $transaction = Transaction::find($id);
+
+        if (!$transaction) {
+            return response()->json(['message' => 'Transaction not found'], 404);
+        }
+
+        if ($transaction->payment_gateway !== 'midtrans') {
+            return response()->json(['error' => 'Only Midtrans transactions can be refunded.'], 400);
+        }
+
+        // Konfigurasi Midtrans
+        Config::$serverKey = env('MIDTRANS_SERVER_KEY');
+        Config::$isProduction = false; // ubah ke true jika sudah live
+
+        $midtransTransactionId = $transaction->transaction_id;
+
+        try {
+            $refundResponse = MidtransTransaction::refund($midtransTransactionId, [
+                'refund_key' => 'refund-' . time(),
+                'amount' => $transaction->total_price,
+                'reason' => 'Customer canceled the order'
+            ]);
+
+            $transaction->update([
+                'status' => 'refunded'
+            ]);
+
+            return response()->json([
+                'message' => 'Refund successful.',
+                'refund_response' => $refundResponse,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Refund failed.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
 
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:pending,paid,failed,refunded'
+            'status' => 'required|in:pending,complete,failed,refunded'
         ]);
 
         $transaction = Transaction::findOrFail($id);

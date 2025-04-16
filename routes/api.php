@@ -76,6 +76,7 @@ Route::middleware(['jwt.auth'])->group(function () {
     Route::middleware('auth:api')->prefix('transaction')->group(function () {
         Route::get('/', [TransactionController::class, 'index']);
         Route::post('/', [TransactionController::class, 'store']);
+        Route::post('/transactions/{id}/refund', [TransactionController::class, 'refund']);
         Route::post('/createMidtransToken', [TransactionController::class, 'createMidtransToken']); // ✅ Tambahkan ini
         Route::get('/{id}', [TransactionController::class, 'show']);
         Route::put('/{id}/status', [TransactionController::class, 'updateStatus']);

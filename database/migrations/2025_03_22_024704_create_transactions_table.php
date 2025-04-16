@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Pembeli
             $table->json('items'); // Menyimpan data akun yang dibeli
             $table->decimal('total_price', 10, 2); // Total harga
-            $table->string('status')->default('pending'); // pending, paid, failed, refunded
+            $table->string('status')->default('pending'); // pending, complete, failed, refunded
             $table->string('payment_method'); // midtrans, dana, etc
             $table->string('payment_gateway')->nullable(); // Gateway penyedia (Midtrans, DANA, manual)
             $table->string('transaction_id')->nullable(); // ID dari gateway

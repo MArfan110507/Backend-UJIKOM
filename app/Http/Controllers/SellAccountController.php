@@ -5,17 +5,26 @@ namespace App\Http\Controllers;
 use App\Models\SellAccount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class SellAccountController extends Controller
 {
     public function index()
     {
-        $accounts = SellAccount::all()->map(function ($account) {
+        $accounts = SellAccount::with('admin:id,name')->get()->map(function ($account) {
             if (!auth()->check() || auth()->user()->role !== 'admin') {
                 unset($account->game_email, $account->game_password);
             }
+            
+            $account->admin_id = $account->admin ? $account->admin->name : null;
+
             return $account;
         });
+
+        if (!Auth::check()) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+        
 
         return response()->json($accounts);
     }
@@ -65,19 +74,19 @@ class SellAccountController extends Controller
         }
 
         $sellAccount = SellAccount::create([
-            'game'         => $request->game,
-            'images'       => $finalImages,
-            'image_paths'  => $finalImagePaths,
-            'stock'        => $request->stock,
-            'game_server'  => $request->game_server,
-            'title'        => $request->title,
-            'price'        => $request->price,
-            'discount'     => $request->discount,
-            'level'        => $request->level,
-            'features'     => $request->features,
-            'game_email'   => $request->game_email,
-            'game_password'=> $request->game_password,
-            'admin_id'     => auth()->id(), // Simpan admin id yang membuat sellaccount
+            'admin_id' => Auth::id(),
+            'game' => $request->game,
+            'images' => $finalImages,
+            'image_paths' => $finalImagePaths,
+            'stock' => $request->stock,
+            'game_server' => $request->game_server,
+            'title' => $request->title,
+            'price' => $request->price,
+            'discount' => $request->discount,
+            'level' => $request->level,
+            'features' => $request->features,
+            'game_email' => $request->game_email,
+            'game_password' => $request->game_password,
         ]);
 
         return response()->json($sellAccount, 201);
@@ -85,7 +94,7 @@ class SellAccountController extends Controller
 
     public function show($id)
     {
-        $account = SellAccount::findOrFail($id);
+        $account = SellAccount::with('admin:id,name')->findOrFail($id);
 
         if (!auth()->check() || auth()->user()->role !== 'admin') {
             unset($account->game_email, $account->game_password);
