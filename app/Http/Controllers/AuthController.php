@@ -36,6 +36,8 @@ class AuthController extends Controller
             'user_id'  => $userId,
         ]);
 
+        $user->profile()->create();
+
         $token = JWTAuth::fromUser($user);
 
         return response()->json([

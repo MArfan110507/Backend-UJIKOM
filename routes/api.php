@@ -40,11 +40,13 @@ Route::middleware(['jwt.auth'])->group(function () {
     });
 
     // Profile
-Route::middleware('auth:api')->prefix('profile')->group(function () {
-    Route::get('/', [ProfileController::class, 'show']); // Menampilkan profil
-    Route::put('/', [ProfileController::class, 'update']); // Mengubah nickname, avatar, dan password
-    Route::post('/reset-password', [ProfileController::class, 'resetPassword']); // Reset password
-});
+    Route::prefix('profiles')->middleware('auth:api')->group(function () {
+        Route::get('/{id}', [ProfileController::class, 'show'])->name('profiles.show');
+        Route::post('/store', [ProfileController::class, 'store'])->name('profiles.store');
+        Route::delete('/delete', [ProfileController::class, 'destroy'])->name('profiles.destroy');
+        Route::post('/update/{id}', [ProfileController::class, 'update'])->name('profiles.update');
+        Route::delete('/photo/delete', [ProfileController::class, 'deletePhoto']);
+    });
 
 
     // Chats
