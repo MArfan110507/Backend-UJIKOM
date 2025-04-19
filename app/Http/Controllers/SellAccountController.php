@@ -11,23 +11,29 @@ class SellAccountController extends Controller
 {
     public function index()
     {
-        $accounts = SellAccount::with('admin:id,name')->get()->map(function ($account) {
-            if (!auth()->check() || auth()->user()->role !== 'admin') {
-                unset($account->game_email, $account->game_password);
-            }
-            
-            $account->admin_id = $account->admin ? $account->admin->name : null;
-
-            return $account;
-        });
-
         if (!Auth::check()) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
-        
-
+    
+        $accounts = SellAccount::with(['admin:id,name', 'admin.profile'])->get()->map(function ($account) {
+            if (!auth()->check() || auth()->user()->role !== 'admin') {
+                unset($account->game_email, $account->game_password);
+            }
+    
+            // Tambahkan nama dan foto profil admin
+            $account->admin_name = $account->admin?->name;
+            $account->admin_photo = $account->admin?->profile?->photo 
+                ? asset('storage/' . $account->admin->profile->photo) 
+                : null;
+    
+            unset($account->admin); // kalau tidak mau tampilkan full data admin
+    
+            return $account;
+        });
+    
         return response()->json($accounts);
     }
+    
 
     public function store(Request $request)
     {
@@ -36,7 +42,7 @@ class SellAccountController extends Controller
             'images' => 'nullable|array|max:5',
             'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'stock' => 'required|integer',
-            'game_server' => 'required|string', // Ganti INI sesuai kebutuhan
+            'game_server' => 'required|string',
             'title' => 'required|string',
             'price' => 'required|numeric',
             'discount' => 'nullable|numeric',
@@ -45,34 +51,33 @@ class SellAccountController extends Controller
             'game_email' => 'required|string',
             'game_password' => 'required|string',
         ]);
-
+    
         $finalImages = [];
         $finalImagePaths = [];
-
+    
         // Upload gambar lewat file
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $file) {
                 $path = $file->store('public/sellaccount_images');
                 $finalImages[] = asset(Storage::url($path));
-                $finalImagePaths[] = $path; // Simpan path asli di storage
+                $finalImagePaths[] = $path;
             }
         }
-
+    
         // Jika ada gambar lewat URL
         if ($request->has('image_urls')) {
             foreach ($request->image_urls as $url) {
                 if (filter_var($url, FILTER_VALIDATE_URL)) {
                     $finalImages[] = $url;
-                    // Jika gambar dari URL, kita tidak punya path file, jadi kosongkan atau simpan null
                     $finalImagePaths[] = null;
                 }
             }
         }
-
+    
         if (count($finalImages) > 5) {
             return response()->json(['error' => 'Maksimal 5 gambar diperbolehkan.'], 422);
         }
-
+    
         $sellAccount = SellAccount::create([
             'admin_id' => Auth::id(),
             'game' => $request->game,
@@ -88,20 +93,41 @@ class SellAccountController extends Controller
             'game_email' => $request->game_email,
             'game_password' => $request->game_password,
         ]);
-
+    
+        // Eager load relasi
+        $sellAccount->load(['admin:id,name', 'admin.profile']);
+    
+        // Tambahkan informasi admin
+        $sellAccount->admin_name = $sellAccount->admin?->name;
+        $sellAccount->admin_photo = $sellAccount->admin?->profile?->photo
+            ? asset('storage/' . $sellAccount->admin->profile->photo)
+            : null;
+    
+        unset($sellAccount->admin); // opsional
+    
         return response()->json($sellAccount, 201);
     }
+    
 
     public function show($id)
     {
-        $account = SellAccount::with('admin:id,name')->findOrFail($id);
-
+        $account = SellAccount::with(['admin:id,name,email', 'admin.profile'])->findOrFail($id);
+    
         if (!auth()->check() || auth()->user()->role !== 'admin') {
             unset($account->game_email, $account->game_password);
         }
-
+    
+        // Tambahkan nama dan foto admin
+        $account->admin_name = $account->admin?->name;
+        $account->admin_photo = $account->admin?->profile?->photo
+            ? asset('storage/' . $account->admin->profile->photo)
+            : null;
+    
+        unset($account->admin); // opsional
+    
         return response()->json($account);
     }
+    
 
     public function update(Request $request, $id)
     {

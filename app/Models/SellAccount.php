@@ -28,7 +28,18 @@ class SellAccount extends Model
         'features' => 'array',
     ];
 
-    protected $appends = ['admin_name'];
+    protected $appends = ['admin_name', 'admin_photo'];
+
+    public function getAdminPhotoAttribute()
+    {
+        if ($this->admin && $this->admin->profile && $this->admin->profile->photo) {
+            return asset('storage/' . $this->admin->profile->photo);
+        }
+
+        return null;
+    }
+
+
 
     public function getAdminNameAttribute()
     {

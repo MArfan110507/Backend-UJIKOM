@@ -35,6 +35,7 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasOne(Profile::class);
     }
 
+
     // app/Models/User.php
     public function isAdmin()
     {
