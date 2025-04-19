@@ -8,36 +8,31 @@ use Illuminate\Support\Facades\Auth;
 
 class PurchaseHistoryController extends Controller
 {
-    public function index()
+    public function history()
     {
-        return response()->json(PurchaseHistory::where('user_id', Auth::id())->get());
-    }
+        $user = Auth::user();
 
-    public function store(Request $request)
-    {
-        $request->validate([
-            'jualakun_id' => 'required|exists:jualakuns,id',
-            'total_price' => 'required|numeric',
-            'purchase_date' => 'required|date',
-            'game_email' => 'required|string',
-            'game_password' => 'required|string'
-        ]);
+        $history = PurchaseHistory::with('sellAccount')
+            ->where('user_id', $user->id)
+            ->get()
+            ->map(function ($item) {
+                $account = $item->sellAccount;
 
-        $purchase = PurchaseHistory::create([
-            'user_id' => Auth::id(),
-            'jualakun_id' => $request->jualakun_id,
-            'total_price' => $request->total_price,
-            'purchase_date' => $request->purchase_date,
-            'game_email' => $request->game_email,
-            'game_password' => $request->game_password,
-        ]);
+                return [
+                    'title' => $account->title,
+                    'game' => $account->game,
+                    'game_server' => $account->game_server,
+                    'level' => $account->level,
+                    'price' => $account->price,
+                    'features' => $account->features,
+                    'images' => $account->images,
+                    'game_email' => $account->game_email,
+                    'game_password' => $account->game_password,
+                    'transaction_id' => $item->transaction_id,
+                    'purchased_at' => $item->created_at->toDateTimeString(),
+                ];
+            });
 
-        return response()->json($purchase, 201);
-    }
-
-    public function show($id)
-    {
-        $purchase = PurchaseHistory::where('user_id', Auth::id())->findOrFail($id);
-        return response()->json($purchase);
+        return response()->json($history);
     }
 }

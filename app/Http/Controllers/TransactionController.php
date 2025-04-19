@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Midtrans\Snap;
 use Midtrans\Config;
 use Midtrans\Transaction as MidtransTransaction;
-use Midtrans\Refund;
+use App\Models\PurchaseHistory;
 
 class TransactionController extends Controller
 {
@@ -165,20 +165,30 @@ class TransactionController extends Controller
     public function approve($id)
     {
         $transaction = Transaction::findOrFail($id);
-
+    
         if (auth()->user()->role !== 'admin') {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
-
+    
         if ($transaction->status !== 'pending') {
             return response()->json(['error' => 'Only pending transactions can be approved.'], 422);
         }
-
+    
         $transaction->status = 'complete';
         $transaction->save();
-
-        return response()->json(['message' => 'Transaction approved successfully.']);
+    
+        // Simpan ke history pembelian
+        foreach ($transaction->items as $item) {
+            PurchaseHistory::create([
+                'user_id' => $transaction->user_id,
+                'sellaccount_id' => $item['id'], // pastikan field ini dikirim di array items
+                'transaction_id' => $transaction->id,
+            ]);
+        }
+    
+        return response()->json(['message' => 'Transaction approved and purchase history saved.']);
     }
+    
 
     public function updateStatus(Request $request, $id)
     {

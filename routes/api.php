@@ -62,11 +62,8 @@ Route::middleware(['jwt.auth'])->group(function () {
     });
 
     // Purchase History
-    Route::prefix('purchase-history')->group(function () {
-        Route::get('/', [PurchaseHistoryController::class, 'index']);
-        Route::post('/', [PurchaseHistoryController::class, 'store']);
-        Route::get('/{id}', [PurchaseHistoryController::class, 'show']);
-    });
+    Route::middleware('auth:jwt')->get('/purchase-history', [PurchaseHistoryController::class, 'history']);
+
 
     // Cart (Keranjang)
     Route::prefix('cart')->group(function () {
@@ -83,10 +80,11 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::post('/', [TransactionController::class, 'store']);
         Route::post('/{id}/approve', [TransactionController::class, 'approve']);
         Route::post('/{id}/refund', [TransactionController::class, 'refund']);
-        Route::post('/createMidtransToken', [TransactionController::class, 'createMidtransToken']);
+        Route::post('/createMidtransToken', [TransactionController::class, 'createMidtransToken']); // Perbaikan di sini
         Route::get('/{id}', [TransactionController::class, 'show']);
         Route::put('/{id}/status', [TransactionController::class, 'updateStatus']);
     });
+    
     
 
 
