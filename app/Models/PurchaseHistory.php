@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class PurchaseHistory extends Model
 {
-    protected $fillable = ['user_id', 'sellaccount_id', 'transaction_id'];
+    protected $fillable = ['user_id', 'sellaccounts_id', 'transaction_id'];
 
     public function user()
     {
@@ -15,7 +15,7 @@ class PurchaseHistory extends Model
 
     public function sellAccount()
     {
-        return $this->belongsTo(SellAccount::class, 'sellaccount_id');
+        return $this->belongsTo(SellAccount::class, 'sellaccounts_id');
     }
 
     public function transaction()

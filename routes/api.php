@@ -50,16 +50,21 @@ Route::middleware(['jwt.auth'])->group(function () {
 
 
     // Chats
-    Route::middleware(['auth:api'])->group(function () {
+    Route::middleware(['auth:api'])->prefix('chats')->group(function () {
+
         // Lihat semua chat berdasarkan sellaccount_id dan receiver_id
-        Route::get('/chats/{sellaccount_id}/{receiver_id}', [ChatController::class, 'index']);
-
+        Route::get('/{sellaccount_id}/{receiver_id}', [ChatController::class, 'index']);
+    
         // Kirim pesan baru
-        Route::post('/chats', [ChatController::class, 'store']);
-
+        Route::post('/', [ChatController::class, 'store']);
+    
         // Update status chat (pending / accept)
-        Route::patch('/chats/{id}/status', [ChatController::class, 'updateStatus']);
+        Route::patch('/{id}/status', [ChatController::class, 'updateStatus']);
+    
+        // Ambil semua chat milik user yang login
+        Route::get('/', [ChatController::class, 'userChats']);
     });
+    
 
     // Purchase History
     Route::middleware('auth:jwt')->get('/purchase-history', [PurchaseHistoryController::class, 'history']);
@@ -77,6 +82,7 @@ Route::middleware(['jwt.auth'])->group(function () {
 
     Route::middleware('auth:api')->prefix('transaction')->group(function () {
         Route::get('/', [TransactionController::class, 'index']);
+        Route::post('/checkout', [TransactionController::class, 'checkoutFromCart']);
         Route::post('/', [TransactionController::class, 'store']);
         Route::post('/{id}/approve', [TransactionController::class, 'approve']);
         Route::post('/{id}/refund', [TransactionController::class, 'refund']);

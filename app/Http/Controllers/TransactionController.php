@@ -170,10 +170,10 @@ class TransactionController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
     
-        if ($transaction->status !== 'pending') {
+        if (strtolower($transaction->status) !== 'pending') {
             return response()->json(['error' => 'Only pending transactions can be approved.'], 422);
         }
-    
+
         $transaction->status = 'complete';
         $transaction->save();
     

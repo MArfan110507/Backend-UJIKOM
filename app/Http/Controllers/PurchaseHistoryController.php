@@ -12,7 +12,7 @@ class PurchaseHistoryController extends Controller
     {
         $user = Auth::user();
 
-        $history = PurchaseHistory::with('sellAccount')
+        $history = PurchaseHistory::with('sellAccounts')
             ->where('user_id', $user->id)
             ->get()
             ->map(function ($item) {

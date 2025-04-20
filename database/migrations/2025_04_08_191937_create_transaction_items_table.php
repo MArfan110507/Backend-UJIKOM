@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('transaction_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('transaction_id')->constrained()->onDelete('cascade'); // Relasi ke transaksi
-            $table->foreignId('sellaccount_id')->constrained()->onDelete('cascade'); // Relasi ke akun game yang dijual
+            $table->foreignId('sellaccounts_id')->constrained()->onDelete('cascade'); // Relasi ke akun game yang dijual
             $table->integer('quantity')->default(1); // Jumlah item
             $table->decimal('price', 10, 2); // Harga per item
             $table->timestamps();

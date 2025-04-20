@@ -10,10 +10,23 @@ class CartController extends Controller
 {
     // Menampilkan semua item dalam keranjang pengguna
     public function index()
-    {
-        $carts = Cart::where('user_id', Auth::id())->with('sellaccount')->get();
-        return response()->json($carts);
-    }
+{
+    $carts = Cart::where('user_id', Auth::id())
+        ->with(['sellaccount' => function ($query) {
+            $query->select('*'); // ambil semua kolom dulu
+        }])
+        ->get();
+
+    // Sembunyikan email & password game dari sellaccount sebelum dikembalikan
+    $carts->each(function ($cart) {
+        if ($cart->sellaccount) {
+            $cart->sellaccount->makeHidden(['game_email', 'game_password']);
+        }
+    });
+
+    return response()->json($carts);
+}
+
 
     public function store(Request $request)
     {

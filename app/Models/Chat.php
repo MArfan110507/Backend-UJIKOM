@@ -7,12 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class Chat extends Model
 {
     protected $fillable = [
-        'sellaccount_id',
-        'sender_id',
-        'receiver_id',
-        'message',
-        'status',
+        'sellaccount_id', 'sender_id', 'receiver_id', 'message', 'status', 'type'
     ];
+    
 
     public function sender()
     {
