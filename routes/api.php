@@ -11,6 +11,7 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\PurchaseHistoryController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\AdminDashboardController;
 
 // Basic test
 Route::get('/test', function () {
@@ -40,13 +41,20 @@ Route::middleware(['jwt.auth'])->group(function () {
     });
 
     // Profile
-    Route::prefix('profiles')->middleware('auth:api')->group(function () {
-        Route::get('/{id}', [ProfileController::class, 'show'])->name('profiles.show');
-        Route::post('/store', [ProfileController::class, 'store'])->name('profiles.store');
-        Route::delete('/delete', [ProfileController::class, 'destroy'])->name('profiles.destroy');
-        Route::post('/update/{id}', [ProfileController::class, 'update'])->name('profiles.update');
-        Route::delete('/photo/delete', [ProfileController::class, 'deletePhoto']);
+    Route::middleware('auth:api')->group(function () {
+        // Endpoint untuk mengunggah foto profil
+        Route::post('/profile/photo', [ProfileController::class, 'store'])->name('profile.store');
+
+        // Endpoint untuk mendapatkan detail profil pengguna
+        Route::get('/profile/{id}', [ProfileController::class, 'show'])->name('profile.show');
+
+        // Endpoint untuk mengupdate profil
+        Route::put('/profile/{id}', [ProfileController::class, 'update'])->name('profile.update');
+
+        // Endpoint untuk menghapus profil
+        Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     });
+
 
 
     // Chats
@@ -54,20 +62,24 @@ Route::middleware(['jwt.auth'])->group(function () {
 
         // Lihat semua chat berdasarkan sellaccount_id dan receiver_id
         Route::get('/{sellaccount_id}/{receiver_id}', [ChatController::class, 'index']);
-    
+
         // Kirim pesan baru
         Route::post('/', [ChatController::class, 'store']);
-    
+
         // Update status chat (pending / accept)
         Route::patch('/{id}/status', [ChatController::class, 'updateStatus']);
-    
+
         // Ambil semua chat milik user yang login
         Route::get('/', [ChatController::class, 'userChats']);
     });
-    
+
 
     // Purchase History
-    Route::middleware('auth:jwt')->get('/purchase-history', [PurchaseHistoryController::class, 'history']);
+    Route::middleware('auth:api')->prefix('purchase-history')->group(function () {
+        Route::get('/', [PurchaseHistoryController::class, 'history']); // Untuk user biasa
+        Route::get('/admin', [PurchaseHistoryController::class, 'allHistory']); // Untuk admin
+    });
+
 
 
     // Cart (Keranjang)
@@ -84,14 +96,15 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::get('/', [TransactionController::class, 'index']);
         Route::post('/checkout', [TransactionController::class, 'checkoutFromCart']);
         Route::post('/', [TransactionController::class, 'store']);
+        Route::post('/createMidtransToken', [TransactionController::class, 'createMidtransToken']);
+        Route::get('/pending', [TransactionController::class, 'listPending']);
         Route::post('/{id}/approve', [TransactionController::class, 'approve']);
-        Route::post('/{id}/refund', [TransactionController::class, 'refund']);
-        Route::post('/createMidtransToken', [TransactionController::class, 'createMidtransToken']); // Perbaikan di sini
         Route::get('/{id}', [TransactionController::class, 'show']);
         Route::put('/{id}/status', [TransactionController::class, 'updateStatus']);
     });
-    
-    
+
+
+
 
 
     Route::prefix('sellaccount')->group(function () {
@@ -110,4 +123,8 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::put('/toggle-status/{id}', [ArticleController::class, 'apiToggleStatus']); // PUT /api/articles/toggle-status/1
         Route::delete('/{id}', [ArticleController::class, 'apiDestroy']); // DELETE /api/articles/1
     });
+
+    //AdminDashboard
+    Route::middleware(['auth:api', 'role:admin'])->get('/admin/dashboard', [AdminDashboardController::class, 'index']);
+
 });

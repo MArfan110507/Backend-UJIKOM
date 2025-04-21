@@ -22,12 +22,10 @@ class ArticleController extends Controller
     {
         $user = Auth::user();
 
-        // Jika user login dan admin, ambil semua
         if ($user && $user->role === 'admin') {
-            $articles = Article::with('user:id,name')->latest()->get();
+            $articles = Article::with(['user:id,name', 'user.profile'])->latest()->get();
         } else {
-            // Selain admin (user biasa atau guest), hanya ambil yang published
-            $articles = Article::where('status', 'published')->with('user:id,name')->latest()->get();
+            $articles = Article::where('status', 'published')->with(['user:id,name', 'user.profile'])->latest()->get();
         }
 
         $articles = $articles->map(function ($article) {
@@ -35,7 +33,9 @@ class ArticleController extends Controller
                 'id' => $article->id,
                 'admin' => $article->user->name,
                 'game' => $article->game,
-                'avatarUrl' => $article->user->avatar_url ?? '/api/placeholder/48/48',
+                'avatarUrl' => $article->user->profile?->photo
+                    ? asset('storage/' . $article->user->profile->photo)
+                    : '/api/placeholder/48/48',
                 'verified' => $article->user->verified ?? false,
                 'timeAgo' => $article->created_at->diffForHumans() . ' • ',
                 'imageUrl' => $article->image_url ?? '/api/placeholder/300/200',
@@ -49,6 +49,7 @@ class ArticleController extends Controller
 
         return response()->json($articles);
     }
+
 
     // API endpoint for storing articles from React
     public function apiStore(Request $request)
@@ -84,11 +85,14 @@ class ArticleController extends Controller
                 'user_id' => Auth::id(),
             ]);
 
+            // setelah create article
             return response()->json([
                 'id' => $article->id,
                 'admin' => Auth::user()->name,
                 'game' => $article->game,
-                'avatarUrl' => Auth::user()->avatar_url ?? '/api/placeholder/48/48',
+                'avatarUrl' => Auth::user()->profile?->photo
+                    ? asset('storage/' . Auth::user()->profile->photo)
+                    : '/api/placeholder/48/48',
                 'verified' => Auth::user()->verified ?? false,
                 'timeAgo' => 'Baru saja • ',
                 'imageUrl' => $article->image_url ?? '/api/placeholder/300/200',
@@ -98,6 +102,7 @@ class ArticleController extends Controller
                 'status' => ucfirst($article->status),
                 'date' => $article->created_at->format('Y-m-d'),
             ], 201);
+            
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to create article',

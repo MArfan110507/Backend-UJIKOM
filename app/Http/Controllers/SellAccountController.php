@@ -15,19 +15,20 @@ class SellAccountController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
     
-        $accounts = SellAccount::with(['admin:id,name', 'admin.profile'])->get()->map(function ($account) {
+        $accounts = SellAccount::with(['admin.profile'])->get()->map(function ($account) {
             if (!auth()->check() || auth()->user()->role !== 'admin') {
                 unset($account->game_email, $account->game_password);
             }
-    
-            // Tambahkan nama dan foto profil admin
+        
+            // Ambil hanya name dan profile photo
             $account->admin_name = $account->admin?->name;
             $account->admin_photo = $account->admin?->profile?->photo 
                 ? asset('storage/' . $account->admin->profile->photo) 
                 : null;
-    
-            unset($account->admin); // kalau tidak mau tampilkan full data admin
-    
+        
+            // Hapus seluruh relasi admin agar email tidak ikut muncul
+            unset($account->admin);
+        
             return $account;
         });
     
@@ -111,7 +112,7 @@ class SellAccountController extends Controller
 
     public function show($id)
     {
-        $account = SellAccount::with(['admin:id,name,email', 'admin.profile'])->findOrFail($id);
+        $account = SellAccount::with(['admin:id,name', 'admin.profile'])->findOrFail($id);
     
         if (!auth()->check() || auth()->user()->role !== 'admin') {
             unset($account->game_email, $account->game_password);

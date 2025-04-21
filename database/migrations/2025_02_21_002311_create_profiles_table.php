@@ -13,9 +13,12 @@ return new class extends Migration
     {
         Schema::create('profiles', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('photo')->nullable(); // Avatar pengguna (nullable)
+            $table->unsignedBigInteger('user_id')->unique(); // satu user satu profile
+            $table->string('photo')->nullable(); // foto profil bisa null
             $table->timestamps();
+
+            // Foreign key yang sesuai dengan tabel users
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

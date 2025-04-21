@@ -22,6 +22,7 @@ class User extends Authenticatable implements JWTSubject
     ];
 
     protected $hidden = [
+        'email',
         'password',
         'remember_token',
     ];
@@ -29,11 +30,11 @@ class User extends Authenticatable implements JWTSubject
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
-
     public function profile()
     {
         return $this->hasOne(Profile::class);
     }
+    
 
 
     // app/Models/User.php
