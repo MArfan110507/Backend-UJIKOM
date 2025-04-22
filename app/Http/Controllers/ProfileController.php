@@ -5,120 +5,210 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Profile;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Resources\ProfileResource;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
-use App\Http\Resources\UserProfileResource;
+use Illuminate\Support\Facades\Log;
 
 class ProfileController extends Controller
 {
-    public function show($id)
+    /**
+     * Menampilkan profil user
+     */
+    public function show($id = null)
     {
-        $user = User::with('profile')->find($id);
-
-        if ($user) {
-            return new UserProfileResource($user);
-        } else {
-            return response()->json(['message' => 'User not found'], 404);
+        // Jika ID tidak disediakan, gunakan user yang sedang login
+        $user = $id ? User::findOrFail($id) : Auth::user();
+        
+        // Pastikan profil tersedia
+        $profile = $user->profile;
+        if (!$profile) {
+            $profile = $user->profile()->create();
+        }
+        
+        $photoUrl = null;
+        if ($profile->photo) {
+            $photoUrl = url('storage/' . $profile->photo);
+        }
+        
+        return response()->json([
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+                'profile' => [
+                    'photo_url' => $photoUrl,
+                    'bio' => $profile->bio,
+                    'address' => $profile->address,
+                ],
+            ],
+        ]);
+    }
+    
+    /**
+     * Update profil user (termasuk data user dan profile)
+     */
+    public function update(Request $request, $id = null)
+    {
+        // Jika ID tidak disediakan, gunakan user yang sedang login
+        $authUser = Auth::user();
+        $id = $id ?: $authUser->id;
+        
+        // Cek akses
+        if ($authUser->id != $id && $authUser->role != 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+        
+        // Cari user yang akan diupdate
+        $user = User::findOrFail($id);
+        
+        Log::info('Update profile request', ['data' => $request->all()]);
+        
+        // Validasi input
+        $validated = $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'email' => 'sometimes|email|unique:users,email,' . $id,
+            'password' => 'sometimes|string|min:6',
+            'photo' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'bio' => 'sometimes|string|nullable',
+            'address' => 'sometimes|string|nullable',
+        ]);
+        
+        // Update user data
+        if ($request->has('name')) {
+            $user->name = $request->name;
+        }
+        
+        if ($request->has('email')) {
+            $user->email = $request->email;
+        }
+        
+        if ($request->has('password')) {
+            $user->password = Hash::make($request->password);
+        }
+        
+        $user->save();
+        
+        // Pastikan profile exists
+        $profile = $user->profile;
+        if (!$profile) {
+            $profile = $user->profile()->create();
+        }
+        
+        // Update profile data
+        $profileData = [];
+        
+        if ($request->has('bio')) {
+            $profileData['bio'] = $request->bio;
+        }
+        
+        if ($request->has('address')) {
+            $profileData['address'] = $request->address;
+        }
+        
+        if (!empty($profileData)) {
+            $profile->update($profileData);
+        }
+        
+        // Handle photo upload
+        if ($request->hasFile('photo')) {
+            try {
+                // Hapus foto lama jika ada
+                if ($profile->photo) {
+                    Storage::disk('public')->delete($profile->photo);
+                }
+                
+                // Upload dan simpan path foto baru
+                $photoPath = $request->file('photo')->store('profiles', 'public');
+                $profile->update(['photo' => $photoPath]);
+                
+                Log::info('Photo uploaded successfully', ['path' => $photoPath]);
+            } catch (\Exception $e) {
+                Log::error('Error uploading photo: ' . $e->getMessage());
+                return response()->json(['message' => 'Error uploading photo: ' . $e->getMessage()], 500);
+            }
+        }
+        
+        // Reload user dengan profile
+        $user->refresh();
+        $profile = $user->profile;
+        
+        $photoUrl = $profile->photo ? url('storage/' . $profile->photo) : null;
+        
+        return response()->json([
+            'message' => 'Profile updated successfully',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+                'profile' => [
+                    'photo_url' => $photoUrl,
+                    'bio' => $profile->bio,
+                    'address' => $profile->address,
+                ],
+            ],
+        ]);
+    }
+    
+    /**
+     * Khusus untuk upload foto profil
+     */
+    public function uploadPhoto(Request $request)
+    {
+        $request->validate([
+            'photo' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+        
+        $user = Auth::user();
+        
+        try {
+            // Pastikan profile exists
+            $profile = $user->profile;
+            if (!$profile) {
+                $profile = $user->profile()->create();
+            }
+            
+            // Hapus foto lama jika ada
+            if ($profile->photo) {
+                Storage::disk('public')->delete($profile->photo);
+            }
+            
+            // Upload dan simpan path foto baru
+            $photoPath = $request->file('photo')->store('profiles', 'public');
+            $profile->update(['photo' => $photoPath]);
+            
+            return response()->json([
+                'message' => 'Photo uploaded successfully',
+                'photo_url' => url('storage/' . $photoPath),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error uploading photo: ' . $e->getMessage());
+            return response()->json(['message' => 'Error uploading photo: ' . $e->getMessage()], 500);
         }
     }
-
-    public function store(Request $request)
+    
+    /**
+     * Hapus foto profil
+     */
+    public function deletePhoto()
     {
         $user = Auth::user();
-
-        $request->validate([
-            'photo' => 'required|image|mimes:jpeg,png,jpg|max:2048',
-        ]);
-
-        $photoPath = $request->file('photo')->store('profiles', 'public');
-
-        $profile = Profile::updateOrCreate(
-            ['user_id' => $user->id],
-            ['photo' => $photoPath]
-        );
-
-        return new ProfileResource($profile);
-    }
-
-    public function update(Request $request, $id)
-{
-    Log::info('Update method called for user ID: ' . $id);
-
-    $user = User::findOrFail($id);
-    Log::info('User before update: ', $user->toArray());
-
-    $validator = Validator::make($request->all(), [
-        'name' => 'nullable|string|max:255',
-        'email' => 'nullable|email|unique:users,email,' . $id,
-        'password' => 'nullable|string|max:20',
-        'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-    ]);
-
-    if ($validator->fails()) {
-        Log::error('Validation failed: ', $validator->errors()->toArray());
-        return response()->json(['errors' => $validator->errors()], 422);
-    }
-
-    $validatedData = $validator->validated();
-    Log::info('Validated data: ', $validatedData);
-
-    if ($request->has('name')) {
-        $user->name = $request->name;
-    }
-
-    if ($request->has('email')) {
-        $user->email = $request->email;
-    }
-
-    if ($request->filled('password')) {
-        $user->password = bcrypt($request->password);
-    }
-
-    $user->save();
-
-    // ✅ update profile photo
-    $profile = $user->profile;
-    if ($profile) {
-        if ($request->hasFile('photo')) {
-            if ($profile->photo) {
-                Storage::disk('public')->delete($profile->photo);
-            }
-            $profile->photo = $request->file('photo')->store('profiles', 'public');
-            $profile->save();
+        $profile = $user->profile;
+        
+        if (!$profile || !$profile->photo) {
+            return response()->json(['message' => 'No photo to delete'], 404);
         }
-    } else {
-        if ($request->hasFile('photo')) {
-            $profile = new Profile();
-            $profile->user_id = $user->id;
-            $profile->photo = $request->file('photo')->store('profiles', 'public');
-            $profile->save();
-        }
-    }
-
-    // ✅ Refresh user and load profile again
-    $user->refresh();
-    $user->load('profile');
-
-    return response()->json([
-        'profile' => new UserProfileResource($user)
-    ]);
-}
-
-
-    public function destroy()
-    {
-        $profile = Auth::user()->profile;
-        if ($profile) {
-            if ($profile->photo) {
-                Storage::disk('public')->delete($profile->photo);
-            }
-            $profile->delete();
-            return response()->json(['message' => 'Profile deleted successfully'], 200);
-        } else {
-            return response()->json(['message' => 'Profile not found'], 404);
+        
+        try {
+            Storage::disk('public')->delete($profile->photo);
+            $profile->update(['photo' => null]);
+            
+            return response()->json(['message' => 'Photo deleted successfully']);
+        } catch (\Exception $e) {
+            Log::error('Error deleting photo: ' . $e->getMessage());
+            return response()->json(['message' => 'Error deleting photo: ' . $e->getMessage()], 500);
         }
     }
 }

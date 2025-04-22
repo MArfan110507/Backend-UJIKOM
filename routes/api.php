@@ -1,5 +1,4 @@
-<?php
-
+<?php 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -10,8 +9,11 @@ use App\Http\Controllers\API\SocialAuthController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\PurchaseHistoryController;
-use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\MidtransController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\OrderController;
 
 // Basic test
 Route::get('/test', function () {
@@ -40,73 +42,63 @@ Route::middleware(['jwt.auth'])->group(function () {
         return response()->json(auth()->user());
     });
 
-    // Profile
-    Route::middleware('auth:api')->group(function () {
-        // Endpoint untuk mengunggah foto profil
-        Route::post('/profile/photo', [ProfileController::class, 'store'])->name('profile.store');
-
-        // Endpoint untuk mendapatkan detail profil pengguna
-        Route::get('/profile/{id}', [ProfileController::class, 'show'])->name('profile.show');
-
-        // Endpoint untuk mengupdate profil
-        Route::put('/profile/{id}', [ProfileController::class, 'update'])->name('profile.update');
-
-        // Endpoint untuk menghapus profil
-        Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // Profile Routes
+    Route::prefix('profile')->group(function () {
+        // Profil user yang sedang login
+        Route::get('/', [ProfileController::class, 'show']);
+        Route::post('/', [ProfileController::class, 'update']);
+        
+        // Upload dan hapus foto
+        Route::post('/photo', [ProfileController::class, 'uploadPhoto']);
+        Route::delete('/photo', [ProfileController::class, 'deletePhoto']);
+        
+        // Untuk admin atau akses ke profil user lain
+        Route::get('/{id}', [ProfileController::class, 'show']);
+        Route::post('/{id}', [ProfileController::class, 'update']);
     });
 
-
-
-    // Chats
-    Route::middleware(['auth:api'])->prefix('chats')->group(function () {
-
-        // Lihat semua chat berdasarkan sellaccount_id dan receiver_id
-        Route::get('/{sellaccount_id}/{receiver_id}', [ChatController::class, 'index']);
-
-        // Kirim pesan baru
-        Route::post('/', [ChatController::class, 'store']);
-
-        // Update status chat (pending / accept)
-        Route::patch('/{id}/status', [ChatController::class, 'updateStatus']);
-
-        // Ambil semua chat milik user yang login
-        Route::get('/', [ChatController::class, 'userChats']);
+    // Chat Routes
+    Route::prefix('chats')->group(function () {
+        Route::get('/{sellaccount_id}/{receiver_id}', [ChatController::class, 'index']); // Lihat chat
+        Route::post('/', [ChatController::class, 'store']); // Kirim pesan baru
+        Route::patch('/{id}/status', [ChatController::class, 'updateStatus']); // Update status chat
+        Route::get('/', [ChatController::class, 'userChats']); // Ambil semua chat milik user
     });
 
-
-    // Purchase History
-    Route::middleware('auth:api')->prefix('purchase-history')->group(function () {
+    // Purchase History Routes
+    Route::prefix('purchase-history')->group(function () {
         Route::get('/', [PurchaseHistoryController::class, 'history']); // Untuk user biasa
         Route::get('/admin', [PurchaseHistoryController::class, 'allHistory']); // Untuk admin
     });
 
+    Route::post('midtrans/callback', [MidtransController::class, 'callback']);
 
-
-    // Cart (Keranjang)
-    Route::prefix('cart')->group(function () {
-        Route::get('/', [CartController::class, 'index']);
-        Route::post('/', [CartController::class, 'store']);
-        Route::put('/{id}', [CartController::class, 'update']);
-        Route::delete('/{id}', [CartController::class, 'destroy']);
+    // User Cart Routes - MOVED FROM auth:sanctum TO jwt.auth MIDDLEWARE GROUP
+    Route::get('cart', [CartController::class, 'viewCart']);
+    Route::post('cart', [CartController::class, 'addToCart']);
+    Route::put('cart/{id}', [CartController::class, 'updateCart']);
+    Route::delete('cart/{id}', [CartController::class, 'removeFromCart']);
+    
+    // Checkout Route - MOVED FROM auth:sanctum TO jwt.auth MIDDLEWARE GROUP
+    Route::post('checkout', [CheckoutController::class, 'checkout']);
+    
+    // User Orders Routes - MOVED FROM auth:sanctum TO jwt.auth MIDDLEWARE GROUP
+    Route::get('orders', [OrderController::class, 'index']);
+    Route::get('orders/{id}', [OrderController::class, 'show']);
+    Route::post('orders/{id}/cancel', [OrderController::class, 'cancel']);
+    
+    // User Payment Routes - MOVED FROM auth:sanctum TO jwt.auth MIDDLEWARE GROUP
+    Route::get('payments', [PaymentController::class, 'myPayments']);
+    
+    // Admin Routes (add middleware to restrict access) - MOVED FROM auth:sanctum TO jwt.auth MIDDLEWARE GROUP
+    Route::middleware('can:admin')->prefix('admin')->group(function () {
+        Route::get('orders', [OrderController::class, 'adminIndex']);
+        Route::get('orders/{id}', [OrderController::class, 'adminShow']);
+        Route::get('payments', [PaymentController::class, 'index']);
+        Route::post('payments/{id}/approve', [PaymentController::class, 'approve']);
     });
 
-    // Transactions
-
-    Route::middleware('auth:api')->prefix('transaction')->group(function () {
-        Route::get('/', [TransactionController::class, 'index']);
-        Route::post('/checkout', [TransactionController::class, 'checkoutFromCart']);
-        Route::post('/', [TransactionController::class, 'store']);
-        Route::post('/createMidtransToken', [TransactionController::class, 'createMidtransToken']);
-        Route::get('/pending', [TransactionController::class, 'listPending']);
-        Route::post('/{id}/approve', [TransactionController::class, 'approve']);
-        Route::get('/{id}', [TransactionController::class, 'show']);
-        Route::put('/{id}/status', [TransactionController::class, 'updateStatus']);
-    });
-
-
-
-
-
+    // SellAccount Routes (user and admin)
     Route::prefix('sellaccount')->group(function () {
         Route::get('/', [SellAccountController::class, 'index']);
         Route::get('/{id}', [SellAccountController::class, 'show']);
@@ -115,8 +107,7 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::delete('/{id}', [SellAccountController::class, 'destroy']);
     });
 
-
-    // Article
+    // Article Routes (user and admin)
     Route::prefix('articles')->group(function () {
         Route::get('/', [ArticleController::class, 'apiIndex']); // GET /api/articles
         Route::post('/', [ArticleController::class, 'apistore']); // POST /api/articles
@@ -124,7 +115,36 @@ Route::middleware(['jwt.auth'])->group(function () {
         Route::delete('/{id}', [ArticleController::class, 'apiDestroy']); // DELETE /api/articles/1
     });
 
-    //AdminDashboard
-    Route::middleware(['auth:api', 'role:admin'])->get('/admin/dashboard', [AdminDashboardController::class, 'index']);
-
+    // Admin Dashboard (only for admin)
+    Route::middleware('role:admin')->get('/admin/dashboard', [AdminDashboardController::class, 'index']);
 });
+
+// Remove or comment out this entire block since we moved all these routes to the jwt.auth middleware group
+/* 
+Route::middleware('auth:sanctum')->group(function () {
+    // User Cart Routes
+    Route::get('cart', [CartController::class, 'viewCart']);
+    Route::post('cart', [CartController::class, 'addToCart']);
+    Route::put('cart/{id}', [CartController::class, 'updateCart']);
+    Route::delete('cart/{id}', [CartController::class, 'removeFromCart']);
+    
+    // Checkout Route
+    Route::post('checkout', [CheckoutController::class, 'checkout']);
+    
+    // User Orders Routes
+    Route::get('orders', [OrderController::class, 'index']);
+    Route::get('orders/{id}', [OrderController::class, 'show']);
+    Route::post('orders/{id}/cancel', [OrderController::class, 'cancel']);
+    
+    // User Payment Routes
+    Route::get('payments', [PaymentController::class, 'myPayments']);
+    
+    // Admin Routes (add middleware to restrict access)
+    Route::middleware('can:admin')->prefix('admin')->group(function () {
+        Route::get('orders', [OrderController::class, 'adminIndex']);
+        Route::get('orders/{id}', [OrderController::class, 'adminShow']);
+        Route::get('payments', [PaymentController::class, 'index']);
+        Route::post('payments/{id}/approve', [PaymentController::class, 'approve']);
+    });
+});
+*/

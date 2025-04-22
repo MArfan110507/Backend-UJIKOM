@@ -11,15 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
-            $table->bigIncrements('id'); // ID utama
-            $table->bigInteger('admin_id')->nullable()->unique(); // ID khusus admin (null untuk user biasa)
-            $table->bigInteger('user_id')->nullable()->unique(); // ID khusus user (null untuk admin)
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->string('password');
-            $table->enum('role', ['admin', 'user'])->default('user');
+        Schema::create('profiles', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('user_id')->unique();
+            $table->string('photo')->nullable();
+            $table->string('bio')->nullable();
+            $table->string('address')->nullable();
             $table->timestamps();
+
+            // Foreign key constraint
+            $table->foreign('user_id')
+                  ->references('id')
+                  ->on('users')
+                  ->onDelete('cascade');
         });
     }
 
@@ -28,6 +32,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('profiles');
     }
 };

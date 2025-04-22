@@ -8,64 +8,79 @@ use Illuminate\Support\Facades\Auth;
 
 class CartController extends Controller
 {
-    // Menampilkan semua item dalam keranjang pengguna
-    public function index()
-{
-    $carts = Cart::where('user_id', Auth::id())
-        ->with(['sellaccount' => function ($query) {
-            $query->select('*'); // ambil semua kolom dulu
-        }])
-        ->get();
-
-    // Sembunyikan email & password game dari sellaccount sebelum dikembalikan
-    $carts->each(function ($cart) {
-        if ($cart->sellaccount) {
-            $cart->sellaccount->makeHidden(['game_email', 'game_password']);
-        }
-    });
-
-    return response()->json($carts);
-}
-
-
-    public function store(Request $request)
+    // Tambahkan akun ke keranjang
+    public function addToCart(Request $request)
     {
-        $request->validate([
+        // Validasi input
+        $validated = $request->validate([
             'sellaccount_id' => 'required|exists:sellaccounts,id',
-            'quantity' => 'required|integer|min:1',
+            'quantity' => 'required|integer|min:1'
         ]);
 
+        // Update atau create isi cart
         $cart = Cart::updateOrCreate(
             [
-                'user_id' => Auth::id(),
-                'sellaccount_id' => $request->sellaccount_id,
+                'user_id' => auth()->id(),
+                'sellaccount_id' => $validated['sellaccount_id'],
             ],
             [
-                'quantity' => $request->quantity,
+                'quantity' => $validated['quantity'],
             ]
         );
 
-        return response()->json(['message' => 'Item added to cart', 'cart' => $cart], 201);
+        return response()->json([
+            'message' => 'Ditambahkan ke keranjang',
+            'cart' => $cart
+        ]);
     }
 
-    public function update(Request $request, $id)
+    // Menampilkan isi keranjang user
+    public function viewCart()
     {
-        $cart = Cart::where('user_id', Auth::id())->findOrFail($id);
-        $request->validate([
-            'quantity' => 'required|integer|min:1',
+        $carts = Cart::with('sellaccount')
+            ->where('user_id', auth()->id())
+            ->get();
+
+        return response()->json($carts);
+    }
+
+    // Update quantity item dalam cart
+    public function updateCart(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'quantity' => 'required|integer|min:1'
         ]);
 
-        $cart->update(['quantity' => $request->quantity]);
+        $cart = Cart::where('id', $id)
+            ->where('user_id', auth()->id())
+            ->first();
 
-        return response()->json(['message' => 'Cart updated', 'cart' => $cart]);
+        if (!$cart) {
+            return response()->json(['message' => 'Item tidak ditemukan'], 404);
+        }
+
+        $cart->quantity = $validated['quantity'];
+        $cart->save();
+
+        return response()->json([
+            'message' => 'Cart updated',
+            'cart' => $cart
+        ]);
     }
 
-    public function destroy($id)
+    // Menghapus item dari cart
+    public function removeFromCart($id)
     {
-        $cart = Cart::where('user_id', Auth::id())->findOrFail($id);
+        $cart = Cart::where('id', $id)
+            ->where('user_id', auth()->id())
+            ->first();
+
+        if (!$cart) {
+            return response()->json(['message' => 'Item tidak ditemukan'], 404);
+        }
+
         $cart->delete();
 
-        return response()->json(['message' => 'Item removed from cart']);
+        return response()->json(['message' => 'Item dihapus dari keranjang']);
     }
 }
-

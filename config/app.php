@@ -43,7 +43,8 @@ return [
     */
 
     'debug' => (bool) env('APP_DEBUG', false),
-
+    
+    'midtrans.server_key' => env('MIDTRANS_SERVER_KEY', false),
     /*
     |--------------------------------------------------------------------------
     | Application URL

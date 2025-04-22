@@ -18,9 +18,5 @@ class PurchaseHistory extends Model
         return $this->belongsTo(SellAccount::class, 'sellaccounts_id');
     }
 
-    public function transaction()
-    {
-        return $this->belongsTo(Transaction::class);
-    }
 }
 
